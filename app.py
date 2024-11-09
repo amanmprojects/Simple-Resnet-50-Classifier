@@ -22,7 +22,7 @@ def process_image(image):
     ])
     return transform(image).unsqueeze(0)
 
-def get_prediction(image):
+def predict_image(image):
     input_tensor = process_image(image)
     with torch.no_grad():
         output = model(input_tensor)
@@ -31,7 +31,7 @@ def get_prediction(image):
 
 def handle_image(image):
     st.image(image, caption='Processed Image', use_container_width=True)
-    probabilities = get_prediction(image)
+    probabilities = predict_image(image)
     top5_prob, top5_idx = torch.topk(probabilities, 5)
     
     st.write("Top 5 Predictions:")
@@ -44,27 +44,10 @@ with open('imagenet_classes.json', 'r') as f:
 
 # Streamlit UI
 st.title("Image Classification with ResNet50")
-st.write("Upload an image or paste from clipboard (Ctrl+V/Cmd+V) and the model will classify it!")
-
-# Add clipboard paste functionality
-clipboard_container = st.container()
-with clipboard_container:
-    st.write("Click here and press Ctrl+V/Cmd+V to paste an image from clipboard")
-    
-    # Handle clipboard paste
-    clipboard_data = st.text_area("", "", key="clipboard", label_visibility="collapsed")
-    if clipboard_data and clipboard_data.startswith(('data:image', 'iVBORw0KGgo')):
-        try:
-            # Handle base64 encoded image data
-            import base64
-            image_data = base64.b64decode(clipboard_data.split(',')[1] if ',' in clipboard_data else clipboard_data)
-            image = Image.open(io.BytesIO(image_data)).convert('RGB')
-            handle_image(image)
-        except Exception as e:
-            st.error(f"Error processing pasted image: {str(e)}")
+st.write("Upload an image by dragging and dropping, browsing, or pasting from clipboard (Ctrl+V/Cmd+V).")
 
 # File uploader
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert('RGB')
     handle_image(image)
